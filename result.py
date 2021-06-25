@@ -7,6 +7,7 @@ import sys
 import glob
 import os
 from skimage import io
+from PIL import Image
 
 PREDICTOR_PATH = "shape_predictor_68_face_landmarks.dat"
 SCALE_FACTOR = 1 
@@ -190,13 +191,18 @@ mask = get_face_mask(im1, landmarks1)
 # Run the HOG face detector on the image data
 detected_faces = detector(im1, 1)
 
-# Load the image
-image = io.imread(sys.argv[1])
+root, extension = os.path.splitext(sys.argv[1])
+if extension == '.png':
+    img = Image.open(sys.argv[1]).convert('RGB')
+    name = root + '.jpg'
+    img.save(name, 'jpeg')
 
-
+image = io.imread(root+'.jpg')
+        
 # Show the desktop window with the image
-win.clear_overlay()
 win.set_image(image)
+
+cv2.imwrite('test2.jpg',image)
 # Loop through each face we found in the image
 for i, face_rect in enumerate(detected_faces):
     # Detected faces are returned as an object with the coordinates 
