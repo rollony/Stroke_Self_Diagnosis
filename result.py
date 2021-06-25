@@ -187,41 +187,39 @@ def correct_colours(im1, im2, landmarks1):
 
 im1, landmarks1 = read_im_and_landmarks(sys.argv[1])
 mask = get_face_mask(im1, landmarks1)
-
-
-# Take the image file name from the command line
-file_name = sys.argv[1]
-# Load the image
-image = io.imread(file_name)
-
 # Run the HOG face detector on the image data
-detected_faces = detector(image, 1)
+detected_faces = detector(im1, 1)
 
-print("Found {} faces in the image file {}".format(len(detected_faces), file_name))
+# Load the image
+image = io.imread(sys.argv[1])
+
 
 # Show the desktop window with the image
+win.clear_overlay()
 win.set_image(image)
-
 # Loop through each face we found in the image
 for i, face_rect in enumerate(detected_faces):
-	# Detected faces are returned as an object with the coordinates 
-	# Draw a box around each face we found
-	#win.add_overlay(face_rect)
-	# Get the the face's pose
-	pose_landmarks = predictor(image, face_rect)
+    # Detected faces are returned as an object with the coordinates 
+    # Draw a box around each face we found
+    win.add_overlay(face_rect)
+    # Get the the face's pose
+    pose_landmarks = predictor(image, face_rect)
+    win.add_overlay(pose_landmarks)
+    #cv2.imshow('frame', image)
+    cv2.imwrite('test.jpg', image)
     # facial landmark represent red point
-	for j in range(68):
-		x = pose_landmarks.part(j).x
-		y = pose_landmarks.part(j).y
-		cv2.circle(image, (x,y), 1, (0, 0, 255), -1)
-	cv2.rectangle(image,(face_rect.left(),face_rect.top()),
+    
+    for j in range(68):
+        x = pose_landmarks.part(j).x
+        y = pose_landmarks.part(j).y
+        cv2.circle(im1, (x,y), 1, (0, 0, 255), -1)
+    cv2.rectangle(im1,(face_rect.left(),face_rect.top()),
                   (face_rect.right(),face_rect.bottom()),
                    (0,255,0),2)
-	cv2.imwrite('output.jpg',image)
-	if cv2.waitKey(1) & 0xFF == ord('q'):
-		break
-	# Draw the face landmarks on the screen.
-	#win.add_overlay(pose_landmarks)
-	        
-#dlib.hit_enter_to_continue()
+    crop = im1[face_rect.top():face_rect.bottom(),face_rect.left():face_rect.right()]
+    cv2.imwrite('output.jpg',crop)
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+    # Draw the face landmarks on the screen.
+dlib.hit_enter_to_continue()
 
