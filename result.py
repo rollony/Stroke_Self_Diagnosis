@@ -204,19 +204,24 @@ win.set_image(image)
 
 # Loop through each face we found in the image
 for i, face_rect in enumerate(detected_faces):
-
 	# Detected faces are returned as an object with the coordinates 
-	# of the top, left, right and bottom edges
-	print("- Face #{} found at Left: {} Top: {} Right: {} Bottom: {}".format(i, face_rect.left(), face_rect.top(), face_rect.right(), face_rect.bottom()))
-
 	# Draw a box around each face we found
-	win.add_overlay(face_rect)
-
+	#win.add_overlay(face_rect)
 	# Get the the face's pose
 	pose_landmarks = predictor(image, face_rect)
-    
+    # facial landmark represent red point
+	for j in range(68):
+		x = pose_landmarks.part(j).x
+		y = pose_landmarks.part(j).y
+		cv2.circle(image, (x,y), 1, (0, 0, 255), -1)
+	cv2.rectangle(image,(face_rect.left(),face_rect.top()),
+                  (face_rect.right(),face_rect.bottom()),
+                   (0,255,0),2)
+	cv2.imwrite('output.jpg',image)
+	if cv2.waitKey(1) & 0xFF == ord('q'):
+		break
 	# Draw the face landmarks on the screen.
-	win.add_overlay(pose_landmarks)
+	#win.add_overlay(pose_landmarks)
 	        
-dlib.hit_enter_to_continue()
+#dlib.hit_enter_to_continue()
 
