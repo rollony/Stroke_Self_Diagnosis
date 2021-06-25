@@ -4,6 +4,9 @@ import dlib
 import numpy
 import math
 import sys
+import glob
+import os
+from skimage import io
 
 PREDICTOR_PATH = "shape_predictor_68_face_landmarks.dat"
 SCALE_FACTOR = 1 
@@ -40,6 +43,18 @@ COLOUR_CORRECT_BLUR_FRAC = 0.6
 
 detector = dlib.get_frontal_face_detector()
 predictor = dlib.shape_predictor(PREDICTOR_PATH)
+win = dlib.image_window()
+
+def newSection():
+    def terminal_size():
+        import fcntl, termios, struct
+        h, w, hp, wp = struct.unpack('HHHH',
+            fcntl.ioctl(0, termios.TIOCGWINSZ,
+            struct.pack('HHHH', 0, 0, 0, 0)))
+        return w
+    ter_int = terminal_size()
+    print ("\n" + ("_" * (int(ter_int))) + "\n\n")
+
 
 def dist(x, y):
     a = x[0,0] - y[0,0]
@@ -92,6 +107,43 @@ def get_face_mask(im, landmarks):
 
     return im
     
+def transformation_from_points(points1, points2):
+    """
+    Return an affine transformation [s * R | T] such that:
+        sum ||s*R*p1,i + T - p2,i||^2
+    is minimized.
+    """
+    # Solve the procrustes problem by subtracting centroids, scaling by the
+    # standard deviation, and then using the SVD to calculate the rotation. See
+    # the following for more details:
+    #   https://en.wikipedia.org/wiki/Orthogonal_Procrustes_problem
+
+    points1 = points1.astype(numpy.float64)
+    points2 = points2.astype(numpy.float64)
+
+    c1 = numpy.mean(points1, axis=0)
+    c2 = numpy.mean(points2, axis=0)
+    points1 -= c1
+    points2 -= c2
+
+    s1 = numpy.std(points1)
+    s2 = numpy.std(points2)
+    points1 /= s1
+    points2 /= s2
+
+    U, S, Vt = numpy.linalg.svd(points1.T * points2)
+
+    # The R we seek is in fact the transpose of the one given by U * Vt. This
+    # is because the above formulation assumes the matrix goes on the right
+    # (with row vectors) where as our solution requires the matrix to be on the
+    # left (with column vectors).
+    R = (U * Vt).T
+
+    return numpy.vstack([numpy.hstack(((s2 / s1) * R,
+                                       c2.T - (s2 / s1) * R * c1.T)),
+                         numpy.matrix([0., 0., 1.])])
+    
+    
 def read_im_and_landmarks(fname):
     im = cv2.imread(fname, cv2.IMREAD_COLOR)
     im = cv2.resize(im, (im.shape[1] * SCALE_FACTOR,
@@ -134,19 +186,37 @@ def correct_colours(im1, im2, landmarks1):
                                                 im2_blur.astype(numpy.float64))
 
 im1, landmarks1 = read_im_and_landmarks(sys.argv[1])
-#im2, landmarks2 = read_im_and_landmarks(sys.argv[2])
+mask = get_face_mask(im1, landmarks1)
 
-#M = transformation_from_points(landmarks1[ALIGN_POINTS],
- #                              landmarks2[ALIGN_POINTS])
 
-#mask = get_face_mask(im2, landmarks2)
-#warped_mask = warp_im(mask, M, im1.shape)
-#combined_mask = numpy.max([get_face_mask(im1, landmarks1), warped_mask],
- #                         axis=0)
+# Take the image file name from the command line
+file_name = sys.argv[1]
+# Load the image
+image = io.imread(file_name)
 
-#warped_im2 = warp_im(im2, M, im1.shape)
-#warped_corrected_im2 = correct_colours(im1, warped_im2, landmarks1)
+# Run the HOG face detector on the image data
+detected_faces = detector(image, 1)
 
-#output_im = im1 * (1.0 - combined_mask) + warped_corrected_im2 * combined_mask
+print("Found {} faces in the image file {}".format(len(detected_faces), file_name))
 
-#cv2.imwrite('output.jpg', output_im)
+# Show the desktop window with the image
+win.set_image(image)
+
+# Loop through each face we found in the image
+for i, face_rect in enumerate(detected_faces):
+
+	# Detected faces are returned as an object with the coordinates 
+	# of the top, left, right and bottom edges
+	print("- Face #{} found at Left: {} Top: {} Right: {} Bottom: {}".format(i, face_rect.left(), face_rect.top(), face_rect.right(), face_rect.bottom()))
+
+	# Draw a box around each face we found
+	win.add_overlay(face_rect)
+
+	# Get the the face's pose
+	pose_landmarks = predictor(image, face_rect)
+    
+	# Draw the face landmarks on the screen.
+	win.add_overlay(pose_landmarks)
+	        
+dlib.hit_enter_to_continue()
+
