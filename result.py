@@ -1,4 +1,3 @@
-
 import cv2
 import dlib
 import numpy
@@ -8,6 +7,8 @@ import glob
 import os
 from skimage import io
 from PIL import Image
+
+CAM_ID = 0
 
 PREDICTOR_PATH = "shape_predictor_68_face_landmarks.dat"
 SCALE_FACTOR = 1 
@@ -44,8 +45,25 @@ COLOUR_CORRECT_BLUR_FRAC = 0.6
 
 detector = dlib.get_frontal_face_detector()
 predictor = dlib.shape_predictor(PREDICTOR_PATH)
-win = dlib.image_window()
 
+
+def capture(camid = CAM_ID):
+    
+    cam = cv2.VideoCapture(camid, cv2.CAP_DSHOW)
+    
+    if cam.isOpened() == False:
+        print ('카메라를 열 수 없습니다 (%d)' % camid)
+        return None
+
+    ret, frame = cam.read()
+    if frame is None:
+        print ('frame is not exist')
+        return None
+    
+    # jpg로 압축 없이 이미지 저장 
+    cv2.imwrite('capture_image.jpg',frame)
+    cam.release()
+    
 def newSection():
     def terminal_size():
         import fcntl, termios, struct
@@ -147,8 +165,7 @@ def transformation_from_points(points1, points2):
     
 def read_im_and_landmarks(fname):
     im = cv2.imread(fname, cv2.IMREAD_COLOR)
-    im = cv2.resize(im, (im.shape[1] * SCALE_FACTOR,
-                         im.shape[0] * SCALE_FACTOR))
+    im = cv2.resize(im, (im.shape[1] * SCALE_FACTOR, im.shape[0] * SCALE_FACTOR))
     s = get_landmarks(im)
     LEFT_LIP = s[48]
     RIGHT_LIP = s[54]
@@ -159,6 +176,18 @@ def read_im_and_landmarks(fname):
     print(left)
     print(right)
     return im, s
+
+def left_right_gap(fname):
+    im = cv2.imread(fname, cv2.IMREAD_COLOR)
+    im = cv2.resize(im, (im.shape[1] * SCALE_FACTOR, im.shape[0] * SCALE_FACTOR))
+    s = get_landmarks(im)
+    LEFT_LIP = s[48]
+    RIGHT_LIP = s[54]
+    LEFT_EYE = s[36]
+    RIGHT_EYE = s[45]
+    left = dist(LEFT_LIP, LEFT_EYE)
+    right = dist(RIGHT_LIP, RIGHT_EYE)
+    return (left-right)
 
 def warp_im(im, M, dshape):
     output_im = numpy.zeros(dshape, dtype=im.dtype)
@@ -186,46 +215,98 @@ def correct_colours(im1, im2, landmarks1):
     return (im2.astype(numpy.float64) * im1_blur.astype(numpy.float64) /
                                                 im2_blur.astype(numpy.float64))
 
-im1, landmarks1 = read_im_and_landmarks(sys.argv[1])
-mask = get_face_mask(im1, landmarks1)
-# Run the HOG face detector on the image data
-detected_faces = detector(im1, 1)
-
-root, extension = os.path.splitext(sys.argv[1])
-if extension == '.png':
-    img = Image.open(sys.argv[1]).convert('RGB')
-    name = root + '.jpg'
-    img.save(name, 'jpeg')
-
-image = io.imread(root+'.jpg')
-        
-# Show the desktop window with the image
-win.set_image(image)
-
-cv2.imwrite('test2.jpg',image)
-# Loop through each face we found in the image
-for i, face_rect in enumerate(detected_faces):
-    # Detected faces are returned as an object with the coordinates 
-    # Draw a box around each face we found
-    win.add_overlay(face_rect)
-    # Get the the face's pose
-    pose_landmarks = predictor(image, face_rect)
-    win.add_overlay(pose_landmarks)
-    #cv2.imshow('frame', image)
-    cv2.imwrite('test.jpg', image)
-    # facial landmark represent red point
+def capture_image(): #새로운 이미지 캡쳐
+    capture()
+    im1, landmarks1 = read_im_and_landmarks(os.getcwd()+'/capture_image.jpg')
+    mask = get_face_mask(im1, landmarks1)
+    # Run the HOG face detector on the image data
+    detected_faces = detector(im1, 1)
+    image = io.imread(os.getcwd()+'/capture_image.jpg')
+    win = dlib.image_window()
+    #cv2.imwrite('test2.jpg',image)
+    cv2.imwrite('test2.jpg',image)
+    # Loop through each face we found in the image
+    win.set_image(image)
+    for i, face_rect in enumerate(detected_faces):
+        # Detected faces are returned as an object with the coordinates 
+        # Draw a box around each face we found
+        win.add_overlay(face_rect)
+        # Get the the face's pose
+        pose_landmarks = predictor(image, face_rect)
+        win.add_overlay(pose_landmarks)
+        #cv2.imshow('frame', image)
+        cv2.imwrite('test.jpg', image)
+        # facial landmark represent red point
     
-    for j in range(68):
-        x = pose_landmarks.part(j).x
-        y = pose_landmarks.part(j).y
-        cv2.circle(im1, (x,y), 1, (0, 0, 255), -1)
-    cv2.rectangle(im1,(face_rect.left(),face_rect.top()),
+        for j in range(68):
+            x = pose_landmarks.part(j).x
+            y = pose_landmarks.part(j).y
+            cv2.circle(im1, (x,y), 1, (0, 0, 255), -1)
+        cv2.rectangle(im1,(face_rect.left(),face_rect.top()),
                   (face_rect.right(),face_rect.bottom()),
                    (0,255,0),2)
-    crop = im1[face_rect.top():face_rect.bottom(),face_rect.left():face_rect.right()]
-    cv2.imwrite('output.jpg',crop)
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
-    # Draw the face landmarks on the screen.
-dlib.hit_enter_to_continue()
+        crop = im1[face_rect.top():face_rect.bottom(),face_rect.left():face_rect.right()]
+        cv2.imwrite('output.jpg',crop)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+        # Draw the face landmarks on the screen.
+    dlib.hit_enter_to_continue()
+    
+    
+def use_image(): #있는 이미지 사용
+    argv = str(input('이미지 파일 이름 입력 : '))
+    im1, landmarks1 = read_im_and_landmarks(argv)
+    mask = get_face_mask(im1, landmarks1)
+    # Run the HOG face detector on the image data
+    detected_faces = detector(im1, 1)
+    root, extension = os.path.splitext(argv)
+    
+    if extension == '.png':
+        img = Image.open(argv).convert('RGB')
+        name = root + '.jpg'
+        img.save(name, 'jpeg')
+    win = dlib.image_window()
+    image = io.imread(root+'.jpg')
+    cv2.imwrite('test2.jpg',image)    
+    # Show the desktop window with the image
+    win.set_image(image)
+    for i, face_rect in enumerate(detected_faces):
+        # Detected faces are returned as an object with the coordinates 
+        # Draw a box around each face we found
+        win.add_overlay(face_rect)
+        # Get the the face's pose
+        pose_landmarks = predictor(image, face_rect)
+        win.add_overlay(pose_landmarks)
+        #cv2.imshow('frame', image)
+        cv2.imwrite('test.jpg', image)
+        # facial landmark represent red point
+    
+        for j in range(68):
+            x = pose_landmarks.part(j).x
+            y = pose_landmarks.part(j).y
+            cv2.circle(im1, (x,y), 1, (0, 0, 255), -1)
+        cv2.rectangle(im1,(face_rect.left(),face_rect.top()),
+                  (face_rect.right(),face_rect.bottom()),
+                   (0,255,0),2)
+        crop = im1[face_rect.top():face_rect.bottom(),face_rect.left():face_rect.right()]
+        cv2.imwrite('output.jpg',crop)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+        # Draw the face landmarks on the screen.
+    dlib.hit_enter_to_continue()
 
+if __name__ == '__main__':
+    print('1. 캡쳐')
+    print('2. 이미지')
+    print('3. 종료')
+    num = int(input('선택 : '))
+    
+    if num == 3:
+        print(' 프로그램 종료 ')
+        sys.exit()
+    elif num == 1:
+        capture_image()
+    elif num == 2:
+        use_image()
+    else:
+        print('{}는 없는 번호'.format(num))
