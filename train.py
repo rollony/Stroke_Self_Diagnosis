@@ -63,23 +63,28 @@ def predict(x):
 
 
 
-learning_rate = 1e-2
+learning_rate = 1e-2 #발산 방지
 
-odd_path_dir = os.getcwd() + '/odd_pictures'
+#안면장애를 가진 사람들 사진 학습
+odd_path_dir = os.getcwd() + '/odd_pictures' 
 odd_file_list = os.listdir(odd_path_dir)
 files = []
-
+print('odd_________')
 for i in range(len(odd_file_list)):
     img = odd_path_dir + '/' + odd_file_list[i]
-    gap = left_right_gap(img)       
+    gap = left_right_gap(img)
+    print(gap)
     files.append([gap,1])
-    
+
+#정상 사람들 사진 학습
 normal_path_dir = os.getcwd() + '/normal_pictures'
 normal_file_list = os.listdir(normal_path_dir)
 
+print('normal_________')
 for i in range(len(normal_file_list)):
     img = normal_path_dir + '/' + normal_file_list[i]
     gap = left_right_gap(img)
+    print(gap)
     files.append([gap,0])
 
 x_data = np.array(files).reshape(len(odd_file_list) + len(normal_file_list), 2)

@@ -167,27 +167,71 @@ def read_im_and_landmarks(fname):
     im = cv2.imread(fname, cv2.IMREAD_COLOR)
     im = cv2.resize(im, (im.shape[1] * SCALE_FACTOR, im.shape[0] * SCALE_FACTOR))
     s = get_landmarks(im)
+    
+    CENTER = s[33]
     LEFT_LIP = s[48]
     RIGHT_LIP = s[54]
     LEFT_EYE = s[36]
     RIGHT_EYE = s[45]
-    left = dist(LEFT_LIP, LEFT_EYE)
-    right = dist(RIGHT_LIP, RIGHT_EYE)
-    print(left)
-    print(right)
+    LEFT_NOSE = s[31]
+    RIGHT_NOSE = s[35]
+    left_eye = dist(CENTER, LEFT_EYE)
+    right_eye = dist(CENTER, RIGHT_EYE)
+    left_lip = dist(CENTER, LEFT_LIP)
+    right_lip = dist(CENTER, RIGHT_LIP)
+    left_nose = dist(CENTER, LEFT_NOSE)
+    right_nose = dist(CENTER, RIGHT_NOSE)
+    
+    ret = 0
+    if(left_eye > right_eye):
+        ret += (right_eye/left_eye)
+    else:
+        ret += (left_eye/right_eye)
+    if(left_lip > right_lip):
+        ret += (right_lip/left_lip)
+    else:
+        ret += (left_lip/right_lip)
+    if(left_nose > right_nose):
+        ret += (right_nose/left_nose)
+    else:
+        ret += (left_nose/right_nose)
+    print(ret)
+    
     return im, s
 
 def left_right_gap(fname):
     im = cv2.imread(fname, cv2.IMREAD_COLOR)
     im = cv2.resize(im, (im.shape[1] * SCALE_FACTOR, im.shape[0] * SCALE_FACTOR))
     s = get_landmarks(im)
+    
+    CENTER = s[33]
     LEFT_LIP = s[48]
     RIGHT_LIP = s[54]
     LEFT_EYE = s[36]
     RIGHT_EYE = s[45]
-    left = dist(LEFT_LIP, LEFT_EYE)
-    right = dist(RIGHT_LIP, RIGHT_EYE)
-    return (left-right)
+    LEFT_NOSE = s[31]
+    RIGHT_NOSE = s[35]
+    left_eye = dist(CENTER, LEFT_EYE)
+    right_eye = dist(CENTER, RIGHT_EYE)
+    left_lip = dist(CENTER, LEFT_LIP)
+    right_lip = dist(CENTER, RIGHT_LIP)
+    left_nose = dist(CENTER, LEFT_NOSE)
+    right_nose = dist(CENTER, RIGHT_NOSE)
+    
+    ret = 0
+    if(left_eye > right_eye):
+        ret += (right_eye/left_eye)
+    else:
+        ret += (left_eye/right_eye)
+    if(left_lip > right_lip):
+        ret += (right_lip/left_lip)
+    else:
+        ret += (left_lip/right_lip)
+    if(left_nose > right_nose):
+        ret += (right_nose/left_nose)
+    else:
+        ret += (left_nose/right_nose)
+    return (3 - ret)
 
 def warp_im(im, M, dshape):
     output_im = numpy.zeros(dshape, dtype=im.dtype)
