@@ -3,7 +3,7 @@ from result import left_right_gap
 import os
 import sys
 
-W = np.random.rand(2,1)
+W = np.random.rand(1,1)
 b = np.random.rand(1)
 
 def sigmoid(x):
@@ -69,12 +69,16 @@ learning_rate = 1e-2 #발산 방지
 odd_path_dir = os.getcwd() + '/odd_pictures' 
 odd_file_list = os.listdir(odd_path_dir)
 files = []
+t_data = []
 print('odd_________')
 for i in range(len(odd_file_list)):
     img = odd_path_dir + '/' + odd_file_list[i]
     gap = left_right_gap(img)
-    print(gap)
-    files.append([gap,1])
+    if gap == 999:
+        continue
+    #print(gap)
+    files.append(gap)
+    t_data.append(1)
 
 #정상 사람들 사진 학습
 normal_path_dir = os.getcwd() + '/normal_pictures'
@@ -84,12 +88,14 @@ print('normal_________')
 for i in range(len(normal_file_list)):
     img = normal_path_dir + '/' + normal_file_list[i]
     gap = left_right_gap(img)
-    print(gap)
-    files.append([gap,0])
+    if gap == 999:
+        continue
+    #print(gap)
+    files.append(gap)
+    t_data.append(0)
 
-x_data = np.array(files).reshape(len(odd_file_list) + len(normal_file_list), 2)
-tmp_data = np.random.rand(len(odd_file_list) + len(normal_file_list),1)
-t_data = np.ones_like(tmp_data)
+x_data = np.array(files).reshape(len(files), 1)
+t_data = np.array(t_data).reshape(len(t_data), 1)
 
      
 print("W = ", W, ", W.shape = ", W.shape, ", b = ", b, " , b.shape = ", b.shape)
@@ -100,11 +106,11 @@ f= lambda x : loss_func(x_data, t_data)
 print("initial error value = ", error_val(x_data, t_data), "initial W = ", W, " \n", ", b = ", b)
 
                   
-for step in range(len(odd_file_list) + len(normal_file_list)):        
+for step in range(30001):
     W -= learning_rate * numerical_derivative(f, W)
     b -= learning_rate * numerical_derivative(f, b)
     
-    
-    print("step = ", step, "error value = ", error_val(x_data, t_data), "W = ", W, " , b = ", b)    
+    if (step % 10000 == 0):
+        print("step = ", step, "error value = ", error_val(x_data, t_data), "W = ", W, " , b = ", b)    
 
-print(predict([left_right_gap(sys.argv[1]), 0]))
+print(predict(left_right_gap(sys.argv[1])))
