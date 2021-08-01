@@ -1,15 +1,16 @@
+import React from 'react';
 import '../../App.css'
-import backgroundVideo from '../../videos/video-7.mp4';
-import img from '../../images/img-1.jpg';
+import InfoSection from '../InfoSection';
+import { homeObjFive, homeObjFour, homeObjOne, homeObjThree, homeObjTwo } from '../InfoSection/Data';
 function Home () {
     return(
-        <div className='about-container'>
-            <video src={backgroundVideo} autoPlay loop muted id='video'/>
-            <h1>프로그램 동작 원리</h1>
-            <img src ={img}></img>
-            <p>설명</p>    
-            
-        </div>
+        <>
+        <InfoSection{...homeObjOne}/>
+        <InfoSection{...homeObjTwo}/>
+        <InfoSection{...homeObjThree}/>
+        <InfoSection{...homeObjFour}/>
+        <InfoSection{...homeObjFive}/>
+        </>
     );
 }
 export default Home;
