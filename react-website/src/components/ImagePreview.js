@@ -4,7 +4,8 @@ import {MdClose} from 'react-icons/md';
 import { Button } from './Button';
 import axios from 'axios';
 import { ResultModal } from './ResultModal';
-
+import xtype from 'xtypejs';
+import Webcam from "react-webcam";
 const Background = styled.div`
     width: 100%;
     height: 100%;
@@ -71,31 +72,44 @@ const CloseModalButton = styled(MdClose)`
     padding: 0;
     z-index: 10;
 `
-export const ImagePreview = ({showImagePreview, setShowImagePreview, ImageSrc}) => {
-    //const [image, setImage] = useState('');
+export const ImagePreview = ({showImagePreview, setShowImagePreview}) => {
     const [showResultModal, setShowResultModal] = useState(false);
     const [ip, setIP] = useState('');
+    const webcamRef = React.useRef(null);
+
+    const capture = React.useCallback(
+        () => {
+        const imageSrc = webcamRef.current.getScreenshot();
+        console.log(imageSrc)
+        const URL = "http://localhost:8000/api";
+        
+        axios.post(URL, {
+            'id' : ip,
+            'image' : imageSrc
+        })
+        .then((Response)=>{console.log(Response.data)})
+        .catch((Error)=>{console.log(Error)})
+        setShowImagePreview(prev=>!prev);
+        setShowResultModal(prev=>!prev);
+        },
+        [webcamRef] 
+        
+    ); 
 
     const getData = async () => {
         const res = await axios.get('https://geolocation-db.com/json/')
         console.log(res.data);
         setIP(res.data.IPv4)
         console.log(ip);
+        
       }
+    getData();
 
-    const postImage = () => {
-        const URL = "http://localhost:8000";
-        getData()
-        axios.post(URL, {
-            id : ip,
-            image: ImageSrc
-        })
-        .then((Response)=>{console.log(Response.data)})
-        .catch((Error)=>{console.log(Error)})
-        setShowImagePreview(prev=>!prev);
-        setShowResultModal(prev=>!prev);
-    }
-
+    const videoConstraints = {
+        width: 1280,
+        height: 720,
+        facingMode: "user"
+    };
     return(
         <>
         <ResultModal showResultModal={showResultModal} setShowResultModal={setShowResultModal}/>
@@ -104,9 +118,25 @@ export const ImagePreview = ({showImagePreview, setShowImagePreview, ImageSrc}) 
                 
                 <ModalWrapper showImagePreview={showImagePreview}>
                 
-                <ModalImg src={ImageSrc}></ModalImg>
+                <Webcam
+                            audio={false}
+                            height={720}
+                            ref={webcamRef}
+                            //screenshotFormat="image/jpeg"
+                            width={1280}
+                            mirrored={false}
+                            imageSmoothing={true}
+                            //forceScreenshotSourceSize="true"
+                            videoConstraints={videoConstraints}
+                            style={{
+                                height: "100%",
+                                width: "100%",
+                                objectFit: "scale-down",
+                                position: "absolute"
+                            }}
+                        />
                 <button>
-                <Button className="btns" buttonStyle='btn--primary' buttonSize='btn--outline' onClick={postImage}>제출<i className="fas fa-paper-plane"></i></Button>
+                <Button className="btns" buttonStyle='btn--primary' buttonSize='btn--outline' onClick={capture}>캡쳐<i className="fas fa-paper-plane"></i></Button>
                 </button>
                 <CloseModalButton onClick={()=>setShowImagePreview(prev=>!prev)}/>
                 </ModalWrapper>
