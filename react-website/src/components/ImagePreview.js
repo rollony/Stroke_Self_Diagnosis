@@ -74,15 +74,24 @@ const CloseModalButton = styled(MdClose)`
 `
 export const ImagePreview = ({showImagePreview, setShowImagePreview}) => {
     const [showResultModal, setShowResultModal] = useState(false);
-    const [ip, setIP] = useState('');
+    //const [ip, setIP] = useState('');
     const webcamRef = React.useRef(null);
 
+    var ip = null;
+    const getData = async () => {
+        const res = await axios.get('https://geolocation-db.com/json/');
+        console.log(res.data);
+        ip = res.data.IPv4;
+    }
+    getData();
     const capture = React.useCallback(
         () => {
-        const imageSrc = webcamRef.current.getScreenshot();
-        console.log(imageSrc)
-        const URL = "http://localhost:8000/api";
         
+        const imageSrc = webcamRef.current.getScreenshot();
+        console.log(ip);
+        console.log(imageSrc);
+        const URL = "http://localhost:8000/api";
+
         axios.post(URL, {
             'id' : ip,
             'image' : imageSrc
@@ -95,15 +104,6 @@ export const ImagePreview = ({showImagePreview, setShowImagePreview}) => {
         [webcamRef] 
         
     ); 
-
-    const getData = async () => {
-        const res = await axios.get('https://geolocation-db.com/json/')
-        console.log(res.data);
-        setIP(res.data.IPv4)
-        console.log(ip);
-        
-      }
-    getData();
 
     const videoConstraints = {
         width: 1280,
@@ -136,7 +136,7 @@ export const ImagePreview = ({showImagePreview, setShowImagePreview}) => {
                             }}
                         />
                 <button>
-                <Button className="btns" buttonStyle='btn--primary' buttonSize='btn--outline' onClick={capture}>캡쳐<i className="fas fa-paper-plane"></i></Button>
+                <Button className="btns" buttonStyle='btn--primary' buttonSize='btn--outline' onClick={getData} onClick={capture}>캡쳐<i className="fas fa-paper-plane"></i></Button>
                 </button>
                 <CloseModalButton onClick={()=>setShowImagePreview(prev=>!prev)}/>
                 </ModalWrapper>
