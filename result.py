@@ -5,6 +5,7 @@ import math
 import sys
 import glob
 import os
+import base64
 from skimage import io
 from PIL import Image
 CAM_ID = 0
@@ -366,19 +367,75 @@ def use_image(): #있는 이미지 사용
     print(predict(left_right_gap(root + '.jpg')))
     dlib.hit_enter_to_continue()
 
+def use_string():
+    with open('base64_data.txt', 'rb') as f:
+        f.seek(23)
+        img_data = f.read()
+    f.close()
+    
+    with open("str_img.webp", "wb") as fh:
+        fh.write(base64.decodebytes(img_data))
+    fh.close()
+    
+    temp = Image.open("str_img.webp").convert("RGB")
+    temp.save("str_img.jpg", "jpeg")
+    
+    argv = "str_img.jpg"
+    im1, landmarks1 = read_im_and_landmarks(argv)
+    mask = get_face_mask(im1, landmarks1)
+    # Run the HOG face detector on the image data
+    detected_faces = detector(im1, 1)
+    root, extension = os.path.splitext(argv)
+    
+    win = dlib.image_window()
+    image = io.imread(root+'.jpg')
+    #image = io.imread(argv,plugin='matplotlib')
+    #image.imread(argv,pilmode="RGB")
+    cv2.imwrite('test2.jpg',image)    
+    # Show the desktop window with the image
+    win.set_image(image)
+    for i, face_rect in enumerate(detected_faces):
+        # Detected faces are returned as an object with the coordinates 
+        # Draw a box around each face we found
+        win.add_overlay(face_rect)
+        # Get the the face's pose
+        pose_landmarks = predictor(image, face_rect)
+        win.add_overlay(pose_landmarks)
+        #cv2.imshow('frame', image)
+        cv2.imwrite('test.jpg', image)
+        # facial landmark represent red point
+    
+        for j in range(68):
+            x = pose_landmarks.part(j).x
+            y = pose_landmarks.part(j).y
+            cv2.circle(im1, (x,y), 1, (0, 0, 255), -1)
+        cv2.rectangle(im1,(face_rect.left(),face_rect.top()),
+                  (face_rect.right(),face_rect.bottom()),
+                   (0,255,0),2)
+        crop = im1[face_rect.top():face_rect.bottom(),face_rect.left():face_rect.right()]
+        cv2.imwrite('output.jpg',crop)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+        # Draw the face landmarks on the screen.
+    print(predict(left_right_gap(root + '.jpg')))
+    dlib.hit_enter_to_continue()
+    
 if __name__ == '__main__':
     print('1. 캡쳐')
     print('2. 이미지')
-    print('3. 종료')
+    print('3. base64')
+    print('4. 종료')
     num = int(input('선택 : '))
     
-    if num == 3:
+    if num == 4:
         print(' 프로그램 종료 ')
         sys.exit()
     elif num == 1:
         capture_image()
     elif num == 2:
         use_image()
+    elif num == 3:
+        use_string()
     else:
         print('{}는 없는 번호'.format(num))
        
