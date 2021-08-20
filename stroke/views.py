@@ -38,11 +38,13 @@ class ReactAppView(View):
 
         ide = settings.MEDIA_ROOT_URL + settings.MEDIA_URL + ide + "_new.jpg"
 
-        result_str, cropped_img = result_main(new_doc, True, ide)
-        context = {'result':result_str, 'image':cropped_img}
+        result_str, cropped_img, eye_rate, lip_rate, nose_rate = result_main(new_doc, True, ide)
+
+        #result_str, cropped_img, LEFT_EYE_X, LEFT_LIP_X, RIGHT_EYE_X, RIGHT_LIP_X, LEFT_EYE_Y, LEFT_LIP_Y, RIGHT_EYE_Y, RIGHT_LIP_Y = result_main(new_doc, True, ide)
+        context = {"result":result_str, "image":cropped_img, "eye_rate":eye_rate, "lip_rate":lip_rate, "nose_rate":nose_rate}
+        #context = {'result':result_str, 'image':cropped_img, 'left_eye':LEFT_EYE,'left_lip':LEFT_LIP, 'right_eye':RIGHT_EYE, 'right_lip':RIGHT_LIP}
 
         return JsonResponse(context, safe=False)
-        
 
 '''
 def create(request):
