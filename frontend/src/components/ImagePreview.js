@@ -79,8 +79,9 @@ export const ImagePreview = ({showImagePreview, setShowImagePreview}) => {
     var ip = null;
     var json_list = null;
     const webcamRef = React.useRef(null);
-    const [result, setResult] = useState(".");
+    const [result, setResult] = useState("");
     const [eye_length, setEye_length] = useState("");
+    const [result_str, setResult_str] = useState("");
     const [nose_length, setNose_length] = useState("");
     const [lip_length, setLip_length] = useState("");
     const [image, setImage] = useState(null);
@@ -88,7 +89,7 @@ export const ImagePreview = ({showImagePreview, setShowImagePreview}) => {
     const capture = React.useCallback(
         () => {
         const imageSrc = webcamRef.current.getScreenshot();
-        const URL = "https://152.70.69.168";
+        const URL = "https://49.50.165.165";
         
         axios.post(URL, {
             'description' : ip,
@@ -102,6 +103,10 @@ export const ImagePreview = ({showImagePreview, setShowImagePreview}) => {
             setNose_length(obj.nose_rate);
             setLip_length(obj.lip_rate);
             setImage(obj.image);
+	    if(obj.result)
+		setResult_str("O");
+	    else
+		setResult_str("X");
             })
         .catch((Error)=>{console.log(Error)})
         setShowImagePreview(prev=>!prev);
@@ -160,7 +165,7 @@ export const ImagePreview = ({showImagePreview, setShowImagePreview}) => {
                 <ModalWrapper showResultModal={showResultModal}>
                     <ModalContent>
                             <h1>검사 결과</h1>
-                            <p>뇌졸중 의심 여부 : {String(result)}</p>
+                            <p>뇌졸중 의심 여부 : {result_str}</p>
                             <p>아래 값들은 코 중앙으로부터 각 좌우측 부위까지 거리의 비율입니다</p>
                             <p>좌측 눈과 우측 눈 : {eye_length}</p>
                             <p>좌측 입술과 우측 입술 : {lip_length}</p>

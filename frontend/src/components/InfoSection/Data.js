@@ -84,7 +84,7 @@ export const qnaObj = {
     lightText: true,
     lightTextDesc: true,
     topLine: '언제든지 연락 주세요!',
-    headLine: '이름 @이메일',
+    headLine: 'soongsil.medical.app@gamil.com',
     description: '프로그램에 대해 궁금한 사항이나 개선 방안이 있으시면 언제든지 연락 바랍니다',
     img: require('../../images/svg-3.svg').default,
     alt: 'developer',
