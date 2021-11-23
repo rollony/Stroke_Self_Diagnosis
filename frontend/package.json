@@ -13,7 +13,7 @@
     "react-html5-camera-photo": "^1.5.5",
     "react-icons": "^4.2.0",
     "react-router-dom": "^5.2.0",
-    "react-scripts": "4.0.3",
+    "react-scripts": "^4.0.3",
     "react-webcam": "^5.2.4",
     "styled-components": "^5.3.0",
     "web-vitals": "^1.1.2",
@@ -43,5 +43,5 @@
       "last 1 safari version"
     ]
   },
-  "proxy": "http://152.70.69.168:80"
+  "proxy": "http://172.30.1.46:80"
 }
